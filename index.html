@@ -82,6 +82,9 @@
   .about-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:start}
   .about-card{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:40px;backdrop-filter:blur(10px);position:relative;overflow:hidden}
   .about-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--teal),var(--gold),var(--teal))}
+  .avatar-wrap{text-align:center;margin-bottom:28px}
+  .avatar{width:150px;height:150px;border-radius:50%;object-fit:cover;object-position:center 20%;border:3px solid transparent;background-origin:border-box;background-clip:padding-box,border-box;background-image:linear-gradient(var(--bg),var(--bg)),linear-gradient(135deg,var(--teal),var(--gold));box-shadow:0 0 40px var(--glow-teal),0 0 80px rgba(240,192,64,.08);transition:transform .4s,box-shadow .4s}
+  .avatar:hover{transform:scale(1.05);box-shadow:0 0 50px var(--glow-teal),0 0 100px rgba(240,192,64,.15)}
   .about-card p{color:var(--text-muted);margin-bottom:16px;font-size:.92rem}
   .about-card p strong{color:var(--text);font-weight:600}
 
@@ -241,6 +244,7 @@
     <div class="about-grid">
       <div>
         <div class="about-card">
+          <div class="avatar-wrap"><img class="avatar" src="avatar.jpg" alt="Alexander Temerev"></div>
           <p>I'm <strong>Alexander Temerev</strong>. I built <strong>Lethe</strong> (lethe.gg), an open-source autonomous AI agent whose architecture maps functional neuroanatomy onto a multi-actor system: persistent memory via autoassociative recall, salience-gated attention, and background cognition.</p>
           <p>Previously I worked on biologically detailed whole-brain simulations at <strong>EPFL Blue Brain Project</strong>, developed geospatial agent-based epidemic models at the <strong>University of Geneva</strong>, and ran multi-agent simulations with emergent dynamics at <strong>CERN</strong>.</p>
           <p>My background also includes <strong>13 years</strong> building low-latency trading systems and quantitative simulation platforms across the Swiss financial industry.</p>
