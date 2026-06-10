@@ -136,6 +136,12 @@
   a.link-active{display:inline-block;padding:7px 20px;border-radius:30px;font-size:.72rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;text-decoration:none;color:var(--bg);background:linear-gradient(135deg,var(--gold),var(--gold-light));box-shadow:0 4px 18px var(--glow-gold);transition:transform .2s}
   a.link-active:hover{transform:scale(1.06)}
 
+  /* ── CONTACT ── */
+  .contact{background:radial-gradient(ellipse 70% 50% at 30% 40%,rgba(74,158,158,.05),transparent)}
+  .consult-card{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:24px;backdrop-filter:blur(10px);position:relative;overflow:hidden;max-width:760px;margin:0 auto}
+  .consult-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--teal),var(--gold),var(--teal))}
+  .consult-card iframe{display:block;width:100%;height:1100px;border:0;border-radius:8px;background:#fff}
+
   /* ── FOOTER ── */
   footer{position:relative;z-index:1;text-align:center;padding:60px 32px;border-top:1px solid rgba(74,158,158,.08)}
   footer .footer-links{display:flex;justify-content:center;gap:32px;margin-bottom:20px}
@@ -201,6 +207,7 @@
       <a href="#about">About</a>
       <a href="#course">Course</a>
       <a href="#submissions">Submissions</a>
+      <a href="#contact">Contact</a>
     </div>
   </div>
 </nav>
@@ -461,6 +468,22 @@
         <span class="link-pill">Coming soon</span>
       </div>
 
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- CONTACT -->
+<section class="contact" id="contact">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-label">Get in Touch</div>
+      <h2 class="section-title">Contact for Consultation</h2>
+      <p class="section-desc">Tell me about your company and what you'd like help with &mdash; you'll receive a personalized GenAI opportunities report.</p>
+    </div>
+    <div class="consult-card">
+      <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSfOoBT-pzGdZW-jywmUdWcNmMU7j4LgHVYHxLikvDJXUelYVQ/viewform?embedded=true" title="Consultation Inquiry form">Loading&hellip;</iframe>
     </div>
   </div>
 </section>
