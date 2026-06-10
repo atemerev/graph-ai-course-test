@@ -1,0 +1,231 @@
+---
+title: "Child Mortality and Fertility: Two Sides of the Demographic Transition"
+author: "Alexander Temerev"
+date: "10 June 2026"
+output:
+  html_document:
+    self_contained: true
+    theme: cosmo
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE, message = FALSE, warning = FALSE,
+  fig.width = 9.5, fig.height = 5.5, dpi = 110
+)
+library(readr)
+library(dplyr)
+library(ggplot2)
+```
+
+## Introduction
+
+This report explores the relationship between two country-level indicators from
+[Gapminder](https://gapminder.org/data) for the year **2020**:
+
+- **Child mortality** — deaths of children under five years of age, per 1,000 live births;
+- **Total fertility rate** — average number of children born per woman.
+
+These two indicators are the core of the *demographic transition*: as fewer children die,
+families have fewer children. The analysis below maps both indicators across the world and
+examines how tightly they are related.
+
+```{r load-data}
+mortality <- read_csv(
+  "data/ddf--datapoints--child_mortality_0_5_year_olds_dying_per_1000_born--by--country--time.csv"
+) |>
+  rename(child_mortality = child_mortality_0_5_year_olds_dying_per_1000_born)
+
+fertility <- read_csv(
+  "data/ddf--datapoints--children_per_woman_total_fertility--by--country--time.csv"
+) |>
+  rename(fertility = children_per_woman_total_fertility)
+
+countries <- read_csv("data/countries_lookup.csv") |>
+  filter(`is--country`) |>
+  select(country, name, region = world_4region)
+
+dat2020 <- mortality |>
+  inner_join(fertility, by = c("country", "time")) |>
+  filter(time == 2020) |>
+  inner_join(countries, by = "country") |>
+  mutate(region = recode(region,
+    africa = "Africa", americas = "Americas",
+    asia = "Asia & Pacific", europe = "Europe & Central Asia"
+  ))
+
+# Harmonize Gapminder country names with the map regions used by the maps package
+map_name_fixes <- c(
+  "United States"                  = "USA",
+  "United Kingdom"                 = "UK",
+  "UAE"                            = "United Arab Emirates",
+  "Congo, Dem. Rep."               = "Democratic Republic of the Congo",
+  "Congo, Rep."                    = "Republic of Congo",
+  "Cote d'Ivoire"                  = "Ivory Coast",
+  "Kyrgyz Republic"                = "Kyrgyzstan",
+  "Lao"                            = "Laos",
+  "Slovak Republic"                = "Slovakia",
+  "St. Lucia"                      = "Saint Lucia",
+  "St. Kitts and Nevis"            = "Saint Kitts",
+  "St. Vincent and the Grenadines" = "Saint Vincent",
+  "Micronesia, Fed. Sts."          = "Micronesia",
+  "Eswatini"                       = "Swaziland",
+  "Trinidad and Tobago"            = "Trinidad",
+  "Antigua and Barbuda"            = "Antigua"
+)
+
+dat_map <- dat2020 |>
+  mutate(map_region = recode(name, !!!map_name_fixes))
+
+world <- map_data("world") |> filter(region != "Antarctica")
+
+world_indicators <- world |>
+  left_join(dat_map, by = c("region" = "map_region"))
+
+theme_worldmap <- theme_void(base_size = 13) +
+  theme(
+    legend.position = "bottom",
+    legend.key.width = unit(2.2, "cm"),
+    legend.key.height = unit(0.35, "cm"),
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5, colour = "grey40")
+  )
+```
+
+## Map 1: Child mortality (2020)
+
+```{r map-mortality}
+ggplot(world_indicators, aes(long, lat, group = group, fill = child_mortality)) +
+  geom_polygon(colour = "white", linewidth = 0.1) +
+  scale_fill_viridis_c(
+    option = "magma", direction = -1, trans = "log10",
+    breaks = c(2, 5, 10, 25, 50, 100),
+    na.value = "grey85",
+    name = "Deaths per 1,000 born (log scale)"
+  ) +
+  coord_fixed(1.3) +
+  labs(
+    title = "Child mortality, 2020",
+    subtitle = "Deaths of children under age 5 per 1,000 live births | Source: Gapminder"
+  ) +
+  theme_worldmap
+```
+
+In 2020, child mortality ranged from about 2 deaths per 1,000 births in the safest
+countries (Iceland, Finland, Singapore, Japan) to more than 100 per 1,000 in parts of
+West and Central Africa — a fifty-fold gap. The darkest band on the map runs across
+the Sahel and Central Africa, while Europe, East Asia, and North America are uniformly light.
+
+## Map 2: Total fertility rate (2020)
+
+```{r map-fertility}
+ggplot(world_indicators, aes(long, lat, group = group, fill = fertility)) +
+  geom_polygon(colour = "white", linewidth = 0.1) +
+  scale_fill_viridis_c(
+    option = "viridis", direction = -1,
+    breaks = 1:7,
+    na.value = "grey85",
+    name = "Children per woman"
+  ) +
+  coord_fixed(1.3) +
+  labs(
+    title = "Total fertility rate, 2020",
+    subtitle = "Average number of children born per woman | Source: Gapminder"
+  ) +
+  theme_worldmap
+```
+
+The fertility map is strikingly similar to the mortality map: the same Sahel and
+Central African belt where child mortality is highest is also where women have the
+most children (5–7 per woman in Niger, Chad, Somalia, and the DR Congo), while most of
+Europe and East Asia are below the replacement level of about 2.1 children per woman.
+
+## Relationship between the two indicators
+
+```{r scatter, fig.height=6}
+region_colours <- c(
+  "Africa" = "#2EB6E0", "Americas" = "#7CBF4B",
+  "Asia & Pacific" = "#E8506E", "Europe & Central Asia" = "#F2C12E"
+)
+
+cor_log <- cor(log10(dat2020$child_mortality), dat2020$fertility)
+
+ggplot(dat2020, aes(child_mortality, fertility)) +
+  geom_smooth(method = "lm", colour = "grey55", linetype = "dashed", se = FALSE) +
+  geom_point(aes(fill = region), shape = 21, colour = "grey25", size = 3, alpha = 0.85) +
+  scale_x_log10(breaks = c(2, 5, 10, 25, 50, 100)) +
+  scale_fill_manual(values = region_colours, name = NULL) +
+  labs(
+    title = "Where more children die, more children are born",
+    subtitle = sprintf(
+      "Each point is a country, 2020 | r = %.2f (fertility vs log child mortality) | Source: Gapminder",
+      cor_log
+    ),
+    x = "Child mortality (deaths per 1,000 born, log scale)",
+    y = "Total fertility rate (children per woman)"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    legend.position = "bottom",
+    plot.title = element_text(face = "bold")
+  )
+```
+
+### Description and interpretation
+
+The scatterplot shows a strong positive association between child mortality and
+fertility: the correlation between the fertility rate and the logarithm of child
+mortality is **r = `r sprintf("%.2f", cor_log)`** across `r nrow(dat2020)` countries.
+Countries where fewer than 10 children per 1,000 die before age five almost all have
+fertility below three children per woman, while nearly every country with mortality
+above 50 per 1,000 has fertility above four.
+
+This is the classic signature of the **demographic transition**. Several mechanisms
+link the two indicators:
+
+- **Replacement and insurance effects.** Where child death is common, families have
+  more children to compensate for expected losses and as insurance for old age.
+- **Shared underlying drivers.** Poverty, limited access to healthcare and
+  contraception, and lower female education raise both child mortality and fertility
+  at the same time, so part of the correlation reflects common causes rather than a
+  direct effect of one indicator on the other.
+- **Transition dynamics.** Historically, mortality falls first and fertility follows
+  with a delay of a generation or two. The countries in the upper-right of the plot
+  (mostly in the Sahel) are at an earlier stage of this transition, not on a different
+  path — Gapminder's time series show them moving along the same curve that Europe and
+  East Asia traversed in the 20th century.
+
+It is worth stressing that **correlation is not causation** here: reducing child
+mortality does not mechanically reduce fertility, but no country has achieved low
+fertility while child mortality remained high, which is why child survival is widely
+seen as a precondition for the fertility transition.
+
+## Personal reflection on the AI workflow
+
+I completed this workshop using an AI coding agent (Claude Code) in the R track. A few
+observations about the process:
+
+- **What worked well.** The agent handled the entire pipeline — installing R and pandoc,
+  locating the Gapminder indicator files, downloading the CSVs, and writing the R Markdown
+  document — with very little intervention from me. Letting the AI choose the indicator
+  pair produced a more interesting analysis (mortality vs fertility) than the default
+  GDP-vs-life-expectancy example.
+- **Where human oversight mattered.** Country names differ between Gapminder and the R
+  `maps` package ("United States" vs "USA", "Congo, Dem. Rep." vs "Democratic Republic
+  of the Congo"), and an unsupervised join would have silently dropped a dozen countries
+  from the maps. Checking the unmatched-country list and adding an explicit recode table
+  was the kind of data-quality step that is easy to miss if you accept AI output without
+  verifying it.
+- **Takeaway.** The AI was strongest as an *executor* — fast, fluent in ggplot2 idioms,
+  good at boilerplate — while the judgment calls (which indicators, log scale on
+  mortality, the caveat about confounding) are where the human in the loop adds value.
+  Iterating with the AI felt less like delegating and more like pair-working with a very
+  fast junior analyst.
+
+---
+
+*Data: [Gapminder](https://gapminder.org/data) (free data from World Bank, UN
+Population Division, and Gapminder estimates, CC-BY). Analysis: R `r getRversion()`,
+ggplot2, knitted with R Markdown.*
